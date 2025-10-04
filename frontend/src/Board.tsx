@@ -1,17 +1,37 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard'
 import { Chess } from 'chess.js'
+
+
+const backend_url = `http://127.0.0.1:8000`;
 
 function Board() {
     const chessGameRef = useRef(new Chess());
     const chessGame = chessGameRef.current;
     const [position, setPosition] = useState(chessGame.fen());
+    useEffect(() => {
+        resetBoard();
+    }, []);
+
+    async function resetBoard() {
+        const url = backend_url + "/reset-board";
+        await fetch(url, { method: "POST" })
+    }
 
     async function randMove() {
-        const color = "black";
-        const backend_url = `http://127.0.0.1:8000/move/${color}`;
+        const possibleMoves = chessGame.moves();
 
-        const res = await fetch(backend_url)
+        if (chessGame.isGameOver()) {
+            return;
+        } 
+
+        const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        chessGame.move(randomMove);
+        setPosition(chessGame.fen());
+
+        const url = backend_url + `/move-san/${randomMove}`;
+
+        await fetch(url, { method: 'POST' })
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`Http error! Status: ${response.status}`)
@@ -21,19 +41,9 @@ function Board() {
             .catch(error => {
                 console.error("Fetch error:", error);
             })
-
-        const possibleMoves = chessGame.moves();
-
-       if (chessGame.isGameOver()) {
-        return;
-       } 
-
-       const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-       chessGame.move(randomMove);
-       setPosition(chessGame.fen());
     }
 
-    function onDrop({
+    async function onDrop({
         sourceSquare,
         targetSquare,
     }: PieceDropHandlerArgs) {
@@ -52,6 +62,10 @@ function Board() {
             if (move === null) return false;
 
             setPosition(chessGame.fen());
+
+            const url = backend_url + `/move-uci/${sourceSquare + targetSquare}`;
+            await fetch(url, { method: "POST" });
+
             setTimeout(randMove, 500);
             return true;
         } catch (error) {
