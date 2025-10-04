@@ -7,7 +7,21 @@ function Board() {
     const chessGame = chessGameRef.current;
     const [position, setPosition] = useState(chessGame.fen());
 
-    function randMove() {
+    async function randMove() {
+        const color = "black";
+        const backend_url = `http://127.0.0.1:8000/move/${color}`;
+
+        const res = await fetch(backend_url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Http error! Status: ${response.status}`)
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+            })
+
         const possibleMoves = chessGame.moves();
 
        if (chessGame.isGameOver()) {
@@ -52,10 +66,11 @@ function Board() {
     }
 
     return (
-        <div style={{ width: '50%', margin: 'auto' }}>
-            <Chessboard options={chessboardOptions}/>
+        <div>
+            <div style={{ width: '50%', margin: 'auto' }}>
+                <Chessboard options={chessboardOptions}/>
+            </div>
         </div>
     );
 }
-
 export default Board
