@@ -1,7 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard'
 import { Chess } from 'chess.js'
-
+import { 
+    Box, 
+    Button, 
+    Stack, 
+    Typography, 
+    Alert,
+    CircularProgress
+} from '@mui/material'
+import { 
+    Refresh, 
+    PlayArrow
+} from '@mui/icons-material'
 
 const backend_url = `http://127.0.0.1:8000`;
 
@@ -9,19 +20,35 @@ function Board() {
     const chessGameRef = useRef(new Chess());
     const chessGame = chessGameRef.current;
     const [position, setPosition] = useState(chessGame.fen());
+    const [isLoading, setIsLoading] = useState(false);
+    const [gameStatus, setGameStatus] = useState('');
+    const [error, setError] = useState('');
+    
     useEffect(() => {
         resetBoard();
     }, []);
 
     async function resetBoard() {
-        const url = backend_url + "/reset-board";
-        await fetch(url, { method: "POST" })
+        setIsLoading(true);
+        setError('');
+        try {
+            const url = backend_url + "/reset-board";
+            await fetch(url, { method: "POST" });
+            chessGame.reset();
+            setPosition(chessGame.fen());
+            setGameStatus('Game reset');
+        } catch (err) {
+            setError('Failed to reset board');
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     async function randMove() {
         const possibleMoves = chessGame.moves();
 
         if (chessGame.isGameOver()) {
+            setGameStatus('Game Over');
             return;
         } 
 
@@ -31,19 +58,19 @@ function Board() {
 
         const url = backend_url + `/move-san/${randomMove}`;
 
-        await fetch(url, { method: 'POST' })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Http error! Status: ${response.status}`)
-                }
-                return response.json();
-            })
-            .catch(error => {
-                console.error("Fetch error:", error);
-            })
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            if (!response.ok) {
+                throw new Error(`Http error! Status: ${response.status}`);
+            }
+            setGameStatus(`AI played: ${randomMove}`);
+        } catch (error) {
+            console.error("Fetch error:", error);
+            setError('Failed to make AI move');
+        }
     }
 
-    async function onDrop({
+    function onDrop({
         sourceSquare,
         targetSquare,
     }: PieceDropHandlerArgs) {
@@ -62,13 +89,15 @@ function Board() {
             if (move === null) return false;
 
             setPosition(chessGame.fen());
+            setGameStatus(`You played: ${move.san}`);
 
             const url = backend_url + `/move-uci/${sourceSquare + targetSquare}`;
-            await fetch(url, { method: "POST" });
+            fetch(url, { method: "POST" });
 
             setTimeout(randMove, 500);
             return true;
         } catch (error) {
+            setError('Invalid move');
             return false;
         }
     }
@@ -80,11 +109,11 @@ function Board() {
     }
 
     return (
-        <div>
-            <div style={{ width: '50%', margin: 'auto' }}>
+        <Stack>
+            <Box sx={{ width: '70%', margin: 'auto' }}>
                 <Chessboard options={chessboardOptions}/>
-            </div>
-        </div>
+            </Box>
+        </Stack>
     );
 }
 export default Board
