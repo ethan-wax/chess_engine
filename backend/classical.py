@@ -37,8 +37,7 @@ def count_pieces(board: chess.Board) -> dict[str, int]:
         piece_count[p] = piece_count[p] + 1
     return piece_count
 
-def count_doubled_pawns(board: chess.Board) -> int:
-    """Returns doubled count for white, black"""
+def count_doubled_pawns(board: chess.Board) -> tuple[int, int]:
     white, black = 0, 0
     for j in range(8):
         white_col = 0
@@ -56,9 +55,18 @@ def count_doubled_pawns(board: chess.Board) -> int:
             black += black_col
     return white, black
 
-        
-
-
-if __name__ == "__main__":
-    board = chess.Board()
-    print(shannon_score(board))
+def count_stopped_pawns(board: chess.Board) -> tuple[int, int]:
+    white, black = 0, 0
+    for i in range(8):
+        for j in range(8):
+            square = i * 8 + j
+            piece = board.piece_at(square)
+            if piece and piece.symbol() == 'P':
+                square_above = (i + 1) * 8 + j
+                if board.piece_at(square_above):
+                    white += 1
+            elif piece and piece.symbol() == 'p':
+                square_below = (i - 1) * 8 + j
+                if board.piece_at(square_below):
+                    black += 1
+    return white, black
