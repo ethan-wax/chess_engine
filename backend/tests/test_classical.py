@@ -1,5 +1,5 @@
 import chess
-from classical import count_isolated_pawns, shannon_score, count_doubled_pawns, count_stopped_pawns
+from classical import classical_move, count_isolated_pawns, shannon_score, count_doubled_pawns, count_stopped_pawns
 
 def test_shannon_score_initial_position():
     board = chess.Board()
@@ -72,3 +72,7 @@ def test_count_isolated_pawns():
     board.set_piece_at(chess.H5, black_pawn)
     isolated = count_isolated_pawns(board)
     assert isolated == (1, 2)
+
+def test_classical_move():
+    classical_move(chess.Board(), depth=2, is_white=True)
+    classical_move(chess.Board(), depth=2, is_white=False)

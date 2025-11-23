@@ -3,7 +3,7 @@ from collections import defaultdict
 
 
 def classical_move(
-    board: chess.Board, depth: int = 5, is_white: bool = False, alpha_beta: bool = False
+    board: chess.Board, depth: int = 2, is_white: bool = False, alpha_beta: bool = False
 ) -> str:
     """Perform the negamax algorithm to select a move.
 
@@ -44,7 +44,7 @@ def nega_max(board, depth, is_white) -> str:
         board.push(move)
         score = -1 * nega_max(board, depth - 1, not is_white)
         max_score = max(max_score, score)
-        board.pop(move)
+        board.pop()
 
     return max_score
 
