@@ -25,7 +25,7 @@ function ControlPanel() {
     return (
         <Card>
             <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                <Stack direction="column" spacing={2} alignItems="center">
                     <Typography variant="body1">
                         Current Model:
                     </Typography>
