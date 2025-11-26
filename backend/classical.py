@@ -3,30 +3,22 @@ from collections import defaultdict
 
 
 def classical_move(
-    board: chess.Board, depth: int = 2, is_white: bool = False, alpha_beta: bool = False
+    board: chess.Board, depth: int = 5, is_white: bool = True, alpha_beta: bool = True
 ) -> str:
     """Perform the negamax algorithm to select a move.
 
     Uses the shannon score for evaluation.
     """
     if alpha_beta:
-        pass
+        move = alpha_beta_max(board, depth, is_white, -float("inf"), float("inf"))[1]
+    else:
+        move = nega_max(board, depth, is_white)[1]
 
-    max_score, best_move = -float("inf"), ""
-    for move in board.legal_moves:
-        board.push(move)
-        score = nega_max(board, depth, is_white)
-        if score > max_score:
-            max_score = score
-            best_move = move
-        board.pop()
+    return board.san(move)
 
-    return board.san(best_move)
-
-
-def nega_max(board, depth, is_white) -> str:
+def alpha_beta_max(board: chess.Board, depth: int, is_white: bool, alpha: float, beta: float) -> str:
     if board.is_checkmate():
-        return (-1 if is_white else 1) * float("inf")
+        return (-1 if is_white else 1) * float("inf"), ''
 
     if (
         board.is_stalemate()
@@ -34,19 +26,57 @@ def nega_max(board, depth, is_white) -> str:
         or board.is_seventyfive_moves()
         or board.is_fivefold_repetition()
     ):
-        return 0
-
+        return 0, ''
+        
     if depth == 0:
-        return (1 if is_white else -1) * shannon_score(board)
+        return (1 if is_white else -1) * shannon_score(board), ''
 
-    max_score = -float("inf")
+    max_score, best_move = -float("inf"), ''
     for move in board.legal_moves:
         board.push(move)
-        score = -1 * nega_max(board, depth - 1, not is_white)
-        max_score = max(max_score, score)
+        score = -alpha_beta_max(board, depth - 1, not is_white, -beta, -alpha)[0]
+
+        board.pop()
+        
+        if score > max_score:
+            max_score = score
+            best_move = move
+            alpha = max(alpha, score)
+
+        if score >= beta:
+            return max_score, best_move
+        
+    return max_score, best_move
+            
+
+
+def nega_max(board, depth, is_white) -> str:
+    if board.is_checkmate():
+        return (-1 if is_white else 1) * float("inf"), ''
+
+    if (
+        board.is_stalemate()
+        or board.is_insufficient_material()
+        or board.is_seventyfive_moves()
+        or board.is_fivefold_repetition()
+    ):
+        return 0, ''
+
+    if depth == 0:
+        return (1 if is_white else -1) * shannon_score(board), ''
+
+    max_score, best_move = -float("inf"), ''
+    for move in board.legal_moves:
+        board.push(move)
+        score = -1 * nega_max(board, depth - 1, not is_white)[0]
+
+        if score > max_score:
+            max_score = score
+            best_move = move
+
         board.pop()
 
-    return max_score
+    return max_score, best_move
 
 
 def shannon_score(board: chess.Board) -> int:
@@ -148,7 +178,7 @@ def count_isolated_pawns(board: chess.Board) -> tuple[int, int]:
             white += int(
                 pawns[i][0] and (not pawns[i - 1][0]) and (not pawns[i + 1][0])
             )
-            white += int(
+            black += int(
                 pawns[i][1] and (not pawns[i - 1][1]) and (not pawns[i + 1][1])
             )
 
