@@ -74,13 +74,13 @@ def test_count_isolated_pawns():
     assert isolated == (1, 2)
 
 def test_classical_move():
-    classical_move(chess.Board(), depth=2, is_white=True, alpha_beta=False)
+    classical_move(chess.Board(), depth=2, alpha_beta=False)
     one_move = chess.Board()
     one_move.push_san("e4")
-    classical_move(one_move, depth=2, is_white=False, alpha_beta=False)
+    classical_move(one_move, depth=2, alpha_beta=False)
 
 def test_alpha_beta_move():
-    classical_move(chess.Board(), depth=2, is_white=True, alpha_beta=True)
+    classical_move(chess.Board(), depth=2, alpha_beta=True)
     one_move = chess.Board()
     one_move.push_san("e4")
-    classical_move(one_move, depth=2, is_white=False, alpha_beta=True)
+    classical_move(one_move, depth=2, alpha_beta=True)

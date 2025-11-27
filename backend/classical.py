@@ -3,22 +3,22 @@ from collections import defaultdict
 
 
 def classical_move(
-    board: chess.Board, depth: int = 5, is_white: bool = True, alpha_beta: bool = True
+    board: chess.Board, depth: int = 5, alpha_beta: bool = True
 ) -> str:
     """Perform the negamax algorithm to select a move.
 
     Uses the shannon score for evaluation.
     """
     if alpha_beta:
-        move = alpha_beta_max(board, depth, is_white, -float("inf"), float("inf"))[1]
+        move = alpha_beta_max(board, depth, -float("inf"), float("inf"))[1]
     else:
-        move = nega_max(board, depth, is_white)[1]
+        move = nega_max(board, depth)[1]
 
     return board.san(move)
 
-def alpha_beta_max(board: chess.Board, depth: int, is_white: bool, alpha: float, beta: float) -> str:
+def alpha_beta_max(board: chess.Board, depth: int, alpha: float, beta: float) -> str:
     if board.is_checkmate():
-        return (-1 if is_white else 1) * float("inf"), ''
+        return -float("inf"), ''
 
     if (
         board.is_stalemate()
@@ -29,12 +29,19 @@ def alpha_beta_max(board: chess.Board, depth: int, is_white: bool, alpha: float,
         return 0, ''
         
     if depth == 0:
-        return (1 if is_white else -1) * shannon_score(board), ''
+        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ''
+
+    # Move ordering: prioritize captures and promotions for better alpha-beta pruning
+    moves = list(board.legal_moves)
+    moves.sort(key=lambda m: (
+        0 if board.is_capture(m) else 1,  # Captures first
+        0 if m.promotion else 1  # Promotions second
+    ))
 
     max_score, best_move = -float("inf"), ''
-    for move in board.legal_moves:
+    for move in moves:
         board.push(move)
-        score = -alpha_beta_max(board, depth - 1, not is_white, -beta, -alpha)[0]
+        score = -alpha_beta_max(board, depth - 1, -beta, -alpha)[0]
 
         board.pop()
         
@@ -50,9 +57,9 @@ def alpha_beta_max(board: chess.Board, depth: int, is_white: bool, alpha: float,
             
 
 
-def nega_max(board, depth, is_white) -> str:
+def nega_max(board, depth) -> str:
     if board.is_checkmate():
-        return (-1 if is_white else 1) * float("inf"), ''
+        return -float("inf"), ''
 
     if (
         board.is_stalemate()
@@ -63,12 +70,19 @@ def nega_max(board, depth, is_white) -> str:
         return 0, ''
 
     if depth == 0:
-        return (1 if is_white else -1) * shannon_score(board), ''
+        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ''
+
+    # Move ordering: prioritize captures and promotions
+    moves = list(board.legal_moves)
+    moves.sort(key=lambda m: (
+        0 if board.is_capture(m) else 1,  # Captures first
+        0 if m.promotion else 1  # Promotions second
+    ))
 
     max_score, best_move = -float("inf"), ''
-    for move in board.legal_moves:
+    for move in moves:
         board.push(move)
-        score = -1 * nega_max(board, depth - 1, not is_white)[0]
+        score = -1 * nega_max(board, depth - 1)[0]
 
         if score > max_score:
             max_score = score
@@ -102,9 +116,11 @@ def shannon_score(board: chess.Board) -> int:
         + 1 * (piece_count["P"] - piece_count["p"])
     )
 
-    doubled = count_doubled_pawns(board)
-    stopped = count_stopped_pawns(board)
-    isolated = count_isolated_pawns(board)
+    doubled, stopped, isolated = pawn_stats(board)
+
+    # doubled = count_doubled_pawns(board)
+    # stopped = count_stopped_pawns(board)
+    # isolated = count_isolated_pawns(board)
     score -= 0.5 * (
         doubled[0] - doubled[1] + stopped[0] - stopped[1] + isolated[0] - isolated[1]
     )
@@ -118,6 +134,58 @@ def count_pieces(board: chess.Board) -> dict[str, int]:
         piece_count[p] = piece_count[p] + 1
     return piece_count
 
+def pawn_stats(board: chess.Board) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
+    """Optimized pawn statistics calculation using piece_map instead of iterating all squares."""
+    doubled_white, doubled_black = 0, 0
+    stopped_white, stopped_black = 0, 0
+    pawns = [(False, False) for _ in range(8)]
+    pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0]  # White pawns per file
+    black_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0]  # Black pawns per file
+    
+    # Iterate only through existing pieces instead of all 64 squares
+    for square, piece in board.piece_map().items():
+        if piece.piece_type == chess.PAWN:
+            file = chess.square_file(square)
+            
+            if piece.color == chess.WHITE:
+                pawn_counts[file] += 1
+                pawns[file] = (True, pawns[file][1])
+                # Check if pawn is stopped (piece directly in front)
+                square_above = square + 8
+                if square_above < 64 and board.piece_at(square_above):
+                    stopped_white += 1
+            else:  # BLACK
+                black_pawn_counts[file] += 1
+                pawns[file] = (pawns[file][0], True)
+                # Check if pawn is stopped (piece directly behind)
+                square_below = square - 8
+                if square_below >= 0 and board.piece_at(square_below):
+                    stopped_black += 1
+    
+    # Count doubled pawns
+    for file in range(8):
+        if pawn_counts[file] >= 2:
+            doubled_white += pawn_counts[file]
+        if black_pawn_counts[file] >= 2:
+            doubled_black += black_pawn_counts[file]
+
+    # Count isolated pawns
+    isolated_white, isolated_black = 0, 0
+    for i in range(8):
+        if i == 0:
+            isolated_white += int(pawns[i][0] and not pawns[i + 1][0])
+            isolated_black += int(pawns[i][1] and not pawns[i + 1][1])
+        elif i == 7:
+            isolated_white += int(pawns[i][0] and not pawns[i - 1][0])
+            isolated_black += int(pawns[i][1] and not pawns[i - 1][1])
+        else:
+            isolated_white += int(
+                pawns[i][0] and (not pawns[i - 1][0]) and (not pawns[i + 1][0])
+            )
+            isolated_black += int(
+                pawns[i][1] and (not pawns[i - 1][1]) and (not pawns[i + 1][1])
+            )
+    return (doubled_white, doubled_black), (stopped_white, stopped_black), (isolated_white, isolated_black)
 
 def count_doubled_pawns(board: chess.Board) -> tuple[int, int]:
     white, black = 0, 0
