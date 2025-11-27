@@ -1,8 +1,10 @@
+import logging
+
+import chess
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import chess
-import logging
+
 from classical import classical_move
 
 # Configure logging
