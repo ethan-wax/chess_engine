@@ -17,6 +17,9 @@ function Board() {
     const [isLoading, setIsLoading] = useState(false);
     const [gameStatus, setGameStatus] = useState('');
     const [error, setError] = useState('');
+    const [playerWin, setPlayerWin] = useState(false);
+    const [playerLoss, setPlayerLoss] = useState(false);
+    const [playerDraw, setPlayerDraw] = useState(false);
     
     useEffect(() => {
         resetBoard();
@@ -40,6 +43,9 @@ function Board() {
             chessGame.reset();
             setPosition(chessGame.fen());
             setGameStatus('Game reset');
+            setPlayerWin(false);
+            setPlayerLoss(false);
+            setPlayerDraw(false);
         } catch (err) {
             setError('Failed to reset board');
         } finally {
@@ -99,7 +105,24 @@ function Board() {
             const url = backend_url + `/move-uci/${sourceSquare + targetSquare}`;
             fetch(url, { method: "POST" });
 
-            setTimeout(classicalMove, 500);
+            if (chessGame.isCheckmate()) {
+                setTimeout(() => setPlayerWin(true), 500);
+                return true;
+            } else if (chessGame.isDraw()) {
+                setTimeout(() => setPlayerDraw(true), 500);
+                return true;
+            }
+
+            setTimeout(async () => {
+                await classicalMove();
+                // Check game end conditions after AI move
+                if (chessGame.isCheckmate()) {
+                    setTimeout(() => setPlayerLoss(true), 500);
+                } else if (chessGame.isDraw()) {
+                    setTimeout(() => setPlayerDraw(true), 500);
+                }
+            }, 500);
+
             return true;
         } catch (error) {
             setError('Invalid move');
@@ -115,12 +138,15 @@ function Board() {
     }
 
     return (
-        <Stack alignItems='center' spacing={3}>
+        <Stack alignItems='center' spacing={2}>
             { error && <Alert variant='outlined' severity='error' sx={{ maxWidth: '50%'}}>{error}</Alert> }
             { gameStatus && <Alert variant='outlined' severity='info' sx={{ maxWidth: '50%'}}>{gameStatus}</Alert> }
+            { playerWin && <Alert variant='outlined' severity='success' sx={{ maxWidth: '50%'}}>You won!</Alert> }
+            { playerLoss && <Alert variant='outlined' severity='error' sx={{ maxWidth: '50%'}}>You lost!</Alert> }
+            { playerDraw && <Alert variant='outlined' severity='warning' sx={{ maxWidth: '50%'}}>Draw!</Alert> }
             { isLoading && <CircularProgress /> }
             
-            <Box sx={{ width: '70%', margin: 'auto' }}>
+            <Box sx={{ width: '55%', margin: 'auto' }}>
                 <Chessboard options={chessboardOptions}/>
             </Box>
         </Stack>
