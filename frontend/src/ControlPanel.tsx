@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { 
     Button, 
     Card, 
@@ -9,18 +8,13 @@ import {
 } from '@mui/material'
 import { Psychology, SmartToy } from '@mui/icons-material'
 
-function ControlPanel() {
-    const [modelType, setModelType] = useState('Classical');
+interface ControlPanelProps {
+    onResetBoard?: () => Promise<void>;
+    modelType: 'Classical' | 'Reinforcement';
+    onSwitchModel: () => void;
+}
 
-    function switchModel(current: string) {
-        console.log('clicked');
-        console.log(current === 'Classical');
-        if (current === 'Classical') {
-            setModelType('Reinforcement');
-        } else {
-            setModelType('Classical');
-        }
-    }
+function ControlPanel({ onResetBoard, modelType, onSwitchModel }: ControlPanelProps) {
 
     return (
         <Card>
@@ -39,10 +33,18 @@ function ControlPanel() {
                     
                     <Button 
                         variant="contained" 
-                        onClick={() => switchModel(modelType)}
+                        onClick={onSwitchModel}
                         sx={{ marginLeft: 2 }}
                     >
                         Switch Model
+                    </Button>
+
+                    <Button
+                        variant="contained"
+                        onClick={onResetBoard}
+                        sx={{ marginLeft: 2 }}
+                    >
+                        Reset Board
                     </Button>
                 </Stack>
             </CardContent>

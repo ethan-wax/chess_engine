@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard'
 import { Chess } from 'chess.js'
 import { 
@@ -10,7 +10,15 @@ import {
 
 const backend_url = `http://127.0.0.1:8000`;
 
-function Board() {
+export interface BoardHandle {
+    resetBoard: () => Promise<void>;
+}
+
+interface BoardProps {
+    modelType: 'Classical' | 'Reinforcement';
+}
+
+const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
     const chessGameRef = useRef(new Chess());
     const chessGame = chessGameRef.current;
     const [position, setPosition] = useState(chessGame.fen());
@@ -24,6 +32,10 @@ function Board() {
     useEffect(() => {
         resetBoard();
     }, []);
+
+    useImperativeHandle(ref, () => ({
+        resetBoard
+    }));
 
     function load() {
         setIsLoading(true);
@@ -57,6 +69,33 @@ function Board() {
         load();
         try {
             const url = backend_url + "/ai-classical";
+            const response = await fetch(url, { method: "GET" });
+            if (!response.ok) {
+                httpError(response);
+            }
+            
+            const data = await response.json();
+            if (data.error) {
+                setError(`AI Error: ${data.error}`);
+                return;
+            }
+            
+            const move = data.move;
+            chessGame.move(move);
+            setPosition(chessGame.fen());
+            setGameStatus(`AI played: ${move}`);
+            
+        } catch (err) {
+            setError('AI failed to move');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    async function reinforcementMove() {
+        load();
+        try {
+            const url = backend_url + "/ai-reinforcement";
             const response = await fetch(url, { method: "GET" });
             if (!response.ok) {
                 httpError(response);
@@ -114,7 +153,12 @@ function Board() {
             }
 
             setTimeout(async () => {
-                await classicalMove();
+                if (modelType === 'Classical') {
+                    await classicalMove();
+                } else {
+                    // TODO: Add reinforcement learning model move
+                    await reinforcementMove(); // Placeholder for now
+                }
                 // Check game end conditions after AI move
                 if (chessGame.isCheckmate()) {
                     setTimeout(() => setPlayerLoss(true), 500);
@@ -151,5 +195,8 @@ function Board() {
             </Box>
         </Stack>
     );
-}
+});
+
+Board.displayName = 'Board';
+
 export default Board

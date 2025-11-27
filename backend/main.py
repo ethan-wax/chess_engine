@@ -1,5 +1,6 @@
 import logging
 
+from backend.reinforcement import reinforcement_move
 import chess
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,4 +59,15 @@ async def ai_classical():
         return JSONResponse(content={"move": move})
     except Exception as e:
         logger.error(f"Error in ai_classical: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.get("/ai-reinforcement")
+async def ai_reinforcement():
+    try:
+        move = reinforcement_move(board)
+        board.push_san(move)
+        logger.info(f"AI classical move {move} made. Current board:\n{board}")
+        return JSONResponse(content={"move": move})
+    except Exception as e:
+        logger.error(f"Error in ai_reinforcement: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
