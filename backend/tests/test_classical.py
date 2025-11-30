@@ -1,6 +1,6 @@
 import chess
 
-from classical import (
+from backend.classical import (
     classical_move,
     mobility,
     pawn_stats,

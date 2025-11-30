@@ -1,6 +1,6 @@
 import logging
 
-from backend.reinforcement import reinforcement_move
+from reinforcement import reinforcement_move
 import chess
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
