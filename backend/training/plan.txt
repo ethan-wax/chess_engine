@@ -1,0 +1,93 @@
+That's a great approach! As your Project Manager, I'll structure this into a series of epics and manageable Jira tasks. We'll prioritize the Minimum Viable Product (MVP)—a working self-play engine—before optimizing the network or the search.
+
+Here is the plan, organized into three phases: Core Setup, Self-Play Loop, and Training/Deployment.
+
+🎯 Project: AlphaZero-Lite Chess Bot (Personal Website MVP)
+📈 Phase 1: Core Game & MCTS Foundation (MVP)
+
+The goal of this phase is to have a basic MCTS engine that can play chess, even if it's currently using random playouts instead of the neural network.
+
+Key	Summary	Component	Priority	Estimation
+GAMESET-1	Implement Python Chess Environment	chess.py	High	2 Days
+GAMESET-2	Define Board Encoding Function	encoder.py	High	1 Day
+MCTS-1	Create MCTS Node Class	mcts.py	High	1 Day
+MCTS-2	Implement MCTS Search Class (Select, Expand, Backprop)	mcts.py	High	3 Days
+MCTS-3	Replace Rollout with NN Placeholder	mcts.py	Medium	1 Day
+📝 Detailed Tasks
+
+GAMESET-1.1: Use a library like python-chess for move generation, legality checking, and game termination detection.
+
+GAMESET-2.1: Implement the function to convert a chess.Board state into the simplified 8×8×12 binary planes (6 for player, 6 for opponent).
+
+MCTS-1.1: Define the Node class with core statistics: Q (total value), N (visit count), and P (initial policy/prior probability).
+
+MCTS-2.1: Implement the Select method using the PUCT formula to balance Q/N (exploitation) and P⋅ 
+1+N 
+child
+​	
+ 
+ΣN 
+parent
+​	
+ 
+
+​	
+ 
+​	
+  (exploration).
+
+MCTS-2.2: Implement the Expand method, which initializes new child nodes using the NN's output (initially Q=0,N=0,P=0).
+
+MCTS-2.3: Implement the Backpropagate method to update Q and N statistics up the tree based on the returned value.
+
+MCTS-3.1: Create a stub function that simulates the NN output, returning random Policy and Value to initially test MCTS flow.
+
+🏋️ Phase 2: Neural Network Integration and Training Prep
+
+The goal of this phase is to build the machine learning pipeline and integrate the NN into the MCTS search.
+
+Key	Summary	Component	Priority	Estimation
+NN-1	Design Simplified CNN Architecture	model.py	High	3 Days
+NN-2	Integrate NN into MCTS Search	mcts.py	High	1 Day
+DATA-1	Implement Training Data Storage	data.py	Medium	1 Day
+DATA-2	Implement Self-Play Game Generation Script	selfplay.py	High	2 Days
+📝 Detailed Tasks
+
+NN-1.1: Define a deep residual CNN (start with an Initial Block + 3-5 Residual Blocks) suitable for the 8×8×12 input.
+
+NN-1.2: Implement the Policy Head (outputting a vector over all possible moves) and the Value Head (outputting a scalar v∈[−1,1]).
+
+NN-2.1: Replace the NN Placeholder (MCTS-3) with a call to the actual model.predict() in the Expand phase.
+
+NN-2.2: Ensure the policy output from the NN is correctly mapped to the P value for the corresponding legal moves in the expanded node.
+
+DATA-1.1: Create a function to save the training sample tuple (State s,MCTS Policy π 
+′
+ ,Game Outcome z) to disk (e.g., as compressed NumPy arrays or a HDF5 file).
+
+DATA-2.1: Create a script that continuously loops: 1) Run a game using the current NN + MCTS (with a low iteration count, e.g., 50), 2) Collect and save all training samples.
+
+🚀 Phase 3: Learning and Deployment
+
+The goal of this phase is to make the bot learn and prepare it for use on your website.
+
+Key	Summary	Component	Priority	Estimation
+TRAIN-1	Implement Policy & Value Loss Function	train.py	High	2 Days
+TRAIN-2	Implement Training Loop & Data Loader	train.py	High	2 Days
+EVAL-1	Initial Evaluation & Iteration	evaluate.py	High	3 Days
+DEPLOY-1	Bot Deployment Wrapper	bot.py	Medium	1 Day
+📝 Detailed Tasks
+
+TRAIN-1.1: Define the Policy Loss as cross-entropy between the NN's P and the MCTS's π 
+′
+ (search probabilities).
+
+TRAIN-1.2: Define the Value Loss as Mean Squared Error (MSE) between the NN's v and the final game outcome z.
+
+TRAIN-2.1: Create a function to load data from DATA-1 and train the NN, minimizing the combined loss.
+
+TRAIN-2.2: Set up the iterative training loop: Self-Play (DATA-2) → Train NN (TRAIN-2) → Update Best Model.
+
+EVAL-1.1: Write an evaluation script to pit the new trained model against the previous best model (e.g., 100 games at a fixed MCTS iteration count) to test for improvement.
+
+DEPLOY-1.1: Create a simple wrapper function that loads the final trained NN and runs MCTS for a fixed time limit (e.g., 5 seconds) before selecting a move to provide to your website's interface.

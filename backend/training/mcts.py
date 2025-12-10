@@ -1,0 +1,78 @@
+from dataclasses import dataclass, field
+import chess
+import random
+
+
+@dataclass
+class Node:
+    board: chess.Board
+    move: chess.Move
+    parent: "Node | None" = None
+    children: list["Node"] = field(default_factory=list)
+    visits: int = 0
+    wins: dict[chess.COLOR, float] = field(
+        default_factory={chess.WHITE: 0.0, chess.BLACK: 0.0}
+    )
+    unvisited_moves: set[str] = field(default_factory=set)
+
+    def __post_init__(self):
+        """Called after __init__ sets all fields. Add custom initialization logic here."""
+        if self.move:
+            self.visited.add(self.move)
+
+        for m in self.board.legal_moves:
+            self.unvisited_moves.add(m)
+
+    def add_random_child(self):
+        new_move = random.sample(self.unvisited_moves, 1)[0]
+        self.unvisited_moves.remove(new_move)
+        new_board = self.board.copy()
+        new_board.push(new_move)
+        new_node = Node(new_board, new_move, parent=self)
+        self.children.append(new_node)
+        return new_node
+
+    def record_win(self, winner: chess.COLOR):
+        self.wins[winner] += 1
+        self.visits += 1
+
+    def can_add_child(self):
+        return len(self.unvisited_moves) > 0
+
+    def is_terminal(self):
+        return self.board.is_game_over()
+
+    def win_percent(self, player: chess.COLOR):
+        return self.wins[player] / self.visits
+
+
+@dataclass
+class MCTSAgent():
+    num_rounds: int = 500
+
+    def select_move(self, board) -> chess.Move:
+        root = Node(board, None)
+
+        for i in range(self.num_rounds):
+            node = root
+            while (not node.can_add_child()) and (not node.is_terminal()):
+                node = self.select_child(node)
+
+            if node.can_add_child():
+                node = node.add_random_child()
+
+            winner = self.simulate(node.board)
+
+            while node is not None:
+                node.record_win(winner)
+                node = node.parent
+
+        best_move = None
+        best_score = -1
+        for child in root.children:
+            child_score = child.win_percent(board.turn)
+            if child_score > best_score:
+                best_move = child.move
+                best_score = child_score
+
+        return best_move
