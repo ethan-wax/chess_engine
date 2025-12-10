@@ -1,6 +1,9 @@
 from dataclasses import dataclass, field
 import chess
 import random
+import math
+
+EXPLORATION_EXPLOITATION_BALANCE = 1
 
 
 @dataclass
@@ -46,6 +49,11 @@ class Node:
         return self.wins[player] / self.visits
 
 
+def uct(win_pct: float, total_rollouts: int, child_rollouts: int):
+    root = math.sqrt(math.log(total_rollouts) / child_rollouts)
+    return win_pct + EXPLORATION_EXPLOITATION_BALANCE * root
+    
+
 @dataclass
 class MCTSAgent():
     num_rounds: int = 500
@@ -76,3 +84,15 @@ class MCTSAgent():
                 best_score = child_score
 
         return best_move
+
+    def select_child(self, node: Node) -> Node:
+        total_rollouts = sum(child.visits for child in node.children)
+        best_node = None
+        best_score = -float('inf')
+
+        for child in node.children:
+            child_score = uct(child.wins[node.board.turn], total_rollouts, child.visits)
+            if child_score > best_score:
+                best_node = child
+                best_score = child_score
+        return best_node
