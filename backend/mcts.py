@@ -13,7 +13,7 @@ class Node:
     parent: "Node | None" = None
     children: list["Node"] = field(default_factory=list)
     visits: int = 0
-    wins: dict[chess.COLOR, float] = field(
+    wins: dict[chess.Color, float] = field(
         default_factory={chess.WHITE: 0.0, chess.BLACK: 0.0}
     )
     unvisited_moves: set[str] = field(default_factory=set)
@@ -35,7 +35,7 @@ class Node:
         self.children.append(new_node)
         return new_node
 
-    def record_win(self, winner: chess.COLOR):
+    def record_win(self, winner: chess.Color):
         self.wins[winner] += 1
         self.visits += 1
 
@@ -45,7 +45,7 @@ class Node:
     def is_terminal(self):
         return self.board.is_game_over()
 
-    def win_percent(self, player: chess.COLOR):
+    def win_percent(self, player: chess.Color):
         return self.wins[player] / self.visits
 
 
@@ -69,7 +69,7 @@ class MCTSAgent():
             if node.can_add_child():
                 node = node.add_random_child()
 
-            winner = self.simulate(node.board)
+            winner = self.rollout(node.board)
 
             while node is not None:
                 node.record_win(winner)
@@ -83,7 +83,7 @@ class MCTSAgent():
                 best_move = child.move
                 best_score = child_score
 
-        return best_move
+        return board.san(best_move)
 
     def select_child(self, node: Node) -> Node:
         total_rollouts = sum(child.visits for child in node.children)
@@ -96,3 +96,14 @@ class MCTSAgent():
                 best_node = child
                 best_score = child_score
         return best_node
+
+    def rollout(self, board: chess.Board) -> chess.Color:
+        winner = None
+
+        while not board.is_game_over():
+            winner = board.turn
+            moves = [move for move in board.legal_moves]
+            move = random.sample(moves, 1)[0]
+            board.push(move)
+        
+        return winner
