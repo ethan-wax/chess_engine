@@ -14,20 +14,17 @@ class Node:
     children: list["Node"] = field(default_factory=list)
     visits: int = 0
     wins: dict[chess.Color, float] = field(
-        default_factory={chess.WHITE: 0.0, chess.BLACK: 0.0}
+        default_factory=lambda: {chess.WHITE: 0.0, chess.BLACK: 0.0}
     )
     unvisited_moves: set[str] = field(default_factory=set)
 
     def __post_init__(self):
         """Called after __init__ sets all fields. Add custom initialization logic here."""
-        if self.move:
-            self.visited.add(self.move)
-
         for m in self.board.legal_moves:
             self.unvisited_moves.add(m)
 
     def add_random_child(self):
-        new_move = random.sample(self.unvisited_moves, 1)[0]
+        new_move = random.choice(list(self.unvisited_moves))
         self.unvisited_moves.remove(new_move)
         new_board = self.board.copy()
         new_board.push(new_move)
@@ -50,6 +47,12 @@ class Node:
 
 
 def uct(win_pct: float, total_rollouts: int, child_rollouts: int):
+    # If child hasn't been visited, give it infinite score to encourage exploration
+    if child_rollouts == 0:
+        return float('inf')
+    # If parent hasn't been visited, avoid log(0) error
+    if total_rollouts == 0:
+        return win_pct
     root = math.sqrt(math.log(total_rollouts) / child_rollouts)
     return win_pct + EXPLORATION_EXPLOITATION_BALANCE * root
     

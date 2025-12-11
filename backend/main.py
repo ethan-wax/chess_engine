@@ -68,6 +68,8 @@ async def ai_mcts():
     try:
         agent = MCTSAgent(500)
         move = agent.select_move(board)
+        # Make the move on the backend board
+        board.push_san(move)
         logger.info(f"AI MCTS move {move} made. Current board:\n{board}")
         return JSONResponse(content={"move": move})
     except Exception as e:
