@@ -3,6 +3,10 @@ import chess
 import random
 import math
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 EXPLORATION_EXPLOITATION_BALANCE = 1
 
 
@@ -62,9 +66,11 @@ class MCTSAgent():
     num_rounds: int = 500
 
     def select_move(self, board) -> chess.Move:
+        logger.info(f"{"white" if board.turn else "black"}'s move")
+
         root = Node(board, None)
 
-        for i in range(self.num_rounds):
+        for _ in range(self.num_rounds):
             node = root
             while (not node.can_add_child()) and (not node.is_terminal()):
                 node = self.select_child(node)
@@ -77,6 +83,7 @@ class MCTSAgent():
             while node is not None:
                 node.record_win(winner)
                 node = node.parent
+
 
         best_move = None
         best_score = -1
@@ -101,12 +108,21 @@ class MCTSAgent():
         return best_node
 
     def rollout(self, board: chess.Board) -> chess.Color:
-        winner = None
-
+        # Make a copy so we don't modify the original board
+        board = board.copy()
+        
         while not board.is_game_over():
-            winner = board.turn
-            moves = [move for move in board.legal_moves]
-            move = random.sample(moves, 1)[0]
+            moves = list(board.legal_moves)
+            move = random.choice(moves)
             board.push(move)
         
-        return winner
+        # After game ends, determine the winner
+        if board.is_checkmate():
+            # The winner is the player who checkmated (opposite of current turn)
+            return chess.WHITE if board.turn == chess.BLACK else chess.BLACK
+        elif board.is_stalemate() or board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition():
+            # For draws, return the player whose turn it is (arbitrary but consistent)
+            return board.turn
+        else:
+            # Fallback (shouldn't happen, but handle gracefully)
+            return board.turn

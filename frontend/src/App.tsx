@@ -25,7 +25,7 @@ const theme = createTheme({
 
 function App() {
   const boardRef = useRef<BoardHandle>(null);
-  const [modelType, setModelType] = useState<'Classical' | 'Reinforcement'>('Classical');
+  const [modelType, setModelType] = useState<'Classical' | 'Reinforcement' | 'MCTS'>('Classical');
 
   const handleResetBoard = async () => {
     if (boardRef.current) {
@@ -34,7 +34,11 @@ function App() {
   };
 
   const handleSwitchModel = () => {
-    setModelType(prev => prev === 'Classical' ? 'Reinforcement' : 'Classical');
+    setModelType(prev => {
+      if (prev === 'Classical') return 'Reinforcement';
+      if (prev === 'Reinforcement') return 'MCTS';
+      return 'Classical';
+    });
   };
 
   return (

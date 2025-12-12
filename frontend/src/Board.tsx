@@ -15,7 +15,7 @@ export interface BoardHandle {
 }
 
 interface BoardProps {
-    modelType: 'Classical' | 'Reinforcement';
+    modelType: 'Classical' | 'Reinforcement' | 'MCTS';
 }
 
 const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
@@ -119,6 +119,33 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
         }
     }
 
+    async function mctsMove() {
+        load();
+        try {
+            const url = backend_url + "/ai-mcts";
+            const response = await fetch(url, { method: "GET" });
+            if (!response.ok) {
+                httpError(response);
+            }
+            
+            const data = await response.json();
+            if (data.error) {
+                setError(`AI Error: ${data.error}`);
+                return;
+            }
+            
+            const move = data.move;
+            chessGame.move(move);
+            setPosition(chessGame.fen());
+            setGameStatus(`AI played: ${move}`);
+            
+        } catch (err) {
+            setError('AI failed to move');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     function onDrop({
         sourceSquare,
         targetSquare,
@@ -155,9 +182,10 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
             setTimeout(async () => {
                 if (modelType === 'Classical') {
                     await classicalMove();
+                } else if (modelType === 'Reinforcement') {
+                    await reinforcementMove();
                 } else {
-                    // TODO: Add reinforcement learning model move
-                    await reinforcementMove(); // Placeholder for now
+                    await mctsMove();
                 }
                 // Check game end conditions after AI move
                 if (chessGame.isCheckmate()) {
