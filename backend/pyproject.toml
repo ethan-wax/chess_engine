@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "chess>=1.11.2",
     "fastapi[standard]>=0.118.0",
+    "numpy>=2.3.5",
     "pydantic>=2.11.9",
     "python-multipart>=0.0.20",
     "ruff>=0.14.6",

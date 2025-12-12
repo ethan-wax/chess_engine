@@ -1,9 +1,13 @@
 import chess
+import numpy as np
 from backend.training.encoder import encode
 
 # Initial chess board setup as bit mask using encoder ordering
-# 12 planes: 0-5 for white pieces (Pawn, Knight, Bishop, Rook, Queen, King)
+# 18 planes: 0-5 for white pieces (Pawn, Knight, Bishop, Rook, Queen, King)
 #            6-11 for black pieces (Pawn, Knight, Bishop, Rook, Queen, King)
+#            12-15 for castling rights (White kingside, White queenside, Black kingside, Black queenside)
+#            16 for turn to move (all 1s for white, all 0s for black)
+#            17 for en passant square
 # Standard starting position:
 # Rank 1 (row 0): White Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook
 # Rank 2 (row 1): White pawns
@@ -143,6 +147,18 @@ initial_setup = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0],
     ],
+    # Plane 12: White kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 13: White queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 14: Black kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 15: Black queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 16: Turn to move (all 1s for white)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 17: En passant square (none in initial position)
+    [[0 for _ in range(8)] for _ in range(8)],
 ]
 
 one_move = [
@@ -277,6 +293,27 @@ one_move = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0],
+    ],
+    # Plane 12: White kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 13: White queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 14: Black kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 15: Black queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 16: Turn to move (all 0s for black)
+    [[0 for _ in range(8)] for _ in range(8)],
+    # Plane 17: En passant on e3 (rank 2, file 4)
+    [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
     ],
 ]
 
@@ -413,6 +450,27 @@ two_moves = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0],
     ],
+    # Plane 12: White kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 13: White queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 14: Black kingside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 15: Black queenside castling rights (all 1s)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 16: Turn to move (all 1s for white)
+    [[1 for _ in range(8)] for _ in range(8)],
+    # Plane 17: En passant on e6 (rank 5, file 4)
+    [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ],
 ]
 
 
@@ -420,20 +478,28 @@ def test_encode_clear_board():
     board = chess.Board()
     board.clear()
     planes = encode(board)
-    assert planes == [[[0 for _ in range(8)] for _ in range(8)] for _ in range(12)]
+    # Should have shape (18, 8, 8)
+    assert planes.shape == (18, 8, 8)
+    assert planes.dtype == np.uint8
+    # All planes should be zeros
+    expected = np.zeros((18, 8, 8), dtype=np.uint8)
+    expected[16] = 1
+    np.testing.assert_array_equal(planes, expected)
 
 
 def test_encode_initial_setup():
     board = chess.Board()
     planes = encode(board)
-    assert planes == initial_setup
+    expected = np.array(initial_setup, dtype=np.uint8)
+    np.testing.assert_array_equal(planes, expected)
 
 
 def test_encode_one_move():
     board = chess.Board()
     board.push_san("e4")
     planes = encode(board)
-    assert planes == one_move
+    expected = np.array(one_move, dtype=np.uint8)
+    np.testing.assert_array_equal(planes, expected)
 
 
 def test_encode_two_moves():
@@ -441,4 +507,5 @@ def test_encode_two_moves():
     board.push_san("e4")
     board.push_san("e5")
     planes = encode(board)
-    assert planes == two_moves
+    expected = np.array(two_moves, dtype=np.uint8)
+    np.testing.assert_array_equal(planes, expected)
