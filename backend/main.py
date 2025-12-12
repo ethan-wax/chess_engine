@@ -1,7 +1,5 @@
-from contextlib import contextmanager
 import logging
 
-from reinforcement import reinforcement_move
 import chess
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from classical import classical_move
 from mcts import MCTSAgent
+from reinforcement import reinforcement_move
 
 # Configure logging
 logging.basicConfig(

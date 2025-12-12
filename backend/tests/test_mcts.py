@@ -1,8 +1,8 @@
 import chess
 
 from backend.mcts import (
-    Node,
     MCTSAgent,
+    Node,
     uct,
 )
 

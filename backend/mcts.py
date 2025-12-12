@@ -1,11 +1,8 @@
-from dataclasses import dataclass, field
-import chess
-import random
 import math
+import random
+from dataclasses import dataclass, field
 
-import logging
-
-logger = logging.getLogger(__name__)
+import chess
 
 EXPLORATION_EXPLOITATION_BALANCE = 1
 
@@ -66,8 +63,6 @@ class MCTSAgent:
     num_rounds: int = 500
 
     def select_move(self, board) -> chess.Move:
-        logger.info(f"{'white' if board.turn else 'black'}'s move")
-
         root = Node(board, None)
 
         for _ in range(self.num_rounds):

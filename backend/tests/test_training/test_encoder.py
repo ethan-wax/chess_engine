@@ -1,5 +1,5 @@
-from backend.training.encoder import encode
 import chess
+from backend.training.encoder import encode
 
 # Initial chess board setup as bit mask using encoder ordering
 # 12 planes: 0-5 for white pieces (Pawn, Knight, Bishop, Rook, Queen, King)
