@@ -3,9 +3,7 @@ from collections import defaultdict
 import chess
 
 
-def classical_move(
-    board: chess.Board, depth: int = 5, alpha_beta: bool = True
-) -> str:
+def classical_move(board: chess.Board, depth: int = 5, alpha_beta: bool = True) -> str:
     """Perform the negamax algorithm to select a move.
 
     Uses the shannon score for evaluation.
@@ -17,9 +15,10 @@ def classical_move(
 
     return board.san(move)
 
+
 def alpha_beta_max(board: chess.Board, depth: int, alpha: float, beta: float) -> str:
     if board.is_checkmate():
-        return -float("inf"), ''
+        return -float("inf"), ""
 
     if (
         board.is_stalemate()
@@ -27,25 +26,27 @@ def alpha_beta_max(board: chess.Board, depth: int, alpha: float, beta: float) ->
         or board.is_seventyfive_moves()
         or board.is_fivefold_repetition()
     ):
-        return 0, ''
-        
+        return 0, ""
+
     if depth == 0:
-        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ''
+        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ""
 
     # Move ordering: prioritize captures and promotions for better alpha-beta pruning
     moves = list(board.legal_moves)
-    moves.sort(key=lambda m: (
-        0 if board.is_capture(m) else 1,  # Captures first
-        0 if m.promotion else 1  # Promotions second
-    ))
+    moves.sort(
+        key=lambda m: (
+            0 if board.is_capture(m) else 1,  # Captures first
+            0 if m.promotion else 1,  # Promotions second
+        )
+    )
 
-    max_score, best_move = -float("inf"), ''
+    max_score, best_move = -float("inf"), ""
     for move in moves:
         board.push(move)
         score = -alpha_beta_max(board, depth - 1, -beta, -alpha)[0]
 
         board.pop()
-        
+
         if score > max_score:
             max_score = score
             best_move = move
@@ -53,14 +54,13 @@ def alpha_beta_max(board: chess.Board, depth: int, alpha: float, beta: float) ->
 
         if score >= beta:
             return max_score, best_move
-        
+
     return max_score, best_move
-            
 
 
 def nega_max(board, depth) -> str:
     if board.is_checkmate():
-        return -float("inf"), ''
+        return -float("inf"), ""
 
     if (
         board.is_stalemate()
@@ -68,19 +68,21 @@ def nega_max(board, depth) -> str:
         or board.is_seventyfive_moves()
         or board.is_fivefold_repetition()
     ):
-        return 0, ''
+        return 0, ""
 
     if depth == 0:
-        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ''
+        return (1 if board.turn == chess.WHITE else -1) * shannon_score(board), ""
 
     # Move ordering: prioritize captures and promotions
     moves = list(board.legal_moves)
-    moves.sort(key=lambda m: (
-        0 if board.is_capture(m) else 1,  # Captures first
-        0 if m.promotion else 1  # Promotions second
-    ))
+    moves.sort(
+        key=lambda m: (
+            0 if board.is_capture(m) else 1,  # Captures first
+            0 if m.promotion else 1,  # Promotions second
+        )
+    )
 
-    max_score, best_move = -float("inf"), ''
+    max_score, best_move = -float("inf"), ""
     for move in moves:
         board.push(move)
         score = -1 * nega_max(board, depth - 1)[0]
@@ -139,19 +141,22 @@ def count_pieces(board: chess.Board) -> dict[str, int]:
         piece_count[p] = piece_count[p] + 1
     return piece_count
 
-def pawn_stats(board: chess.Board) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
+
+def pawn_stats(
+    board: chess.Board,
+) -> tuple[tuple[int, int], tuple[int, int], tuple[int, int]]:
     """Optimized pawn statistics calculation using piece_map instead of iterating all squares."""
     doubled_white, doubled_black = 0, 0
     stopped_white, stopped_black = 0, 0
     pawns = [(False, False) for _ in range(8)]
     pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0]  # White pawns per file
     black_pawn_counts = [0, 0, 0, 0, 0, 0, 0, 0]  # Black pawns per file
-    
+
     # Iterate only through existing pieces instead of all 64 squares
     for square, piece in board.piece_map().items():
         if piece.piece_type == chess.PAWN:
             file = chess.square_file(square)
-            
+
             if piece.color == chess.WHITE:
                 pawn_counts[file] += 1
                 pawns[file] = (True, pawns[file][1])
@@ -166,7 +171,7 @@ def pawn_stats(board: chess.Board) -> tuple[tuple[int, int], tuple[int, int], tu
                 square_below = square - 8
                 if square_below >= 0 and board.piece_at(square_below):
                     stopped_black += 1
-    
+
     # Count doubled pawns
     for file in range(8):
         if pawn_counts[file] >= 2:
@@ -190,24 +195,28 @@ def pawn_stats(board: chess.Board) -> tuple[tuple[int, int], tuple[int, int], tu
             isolated_black += int(
                 pawns[i][1] and (not pawns[i - 1][1]) and (not pawns[i + 1][1])
             )
-    return (doubled_white, doubled_black), (stopped_white, stopped_black), (isolated_white, isolated_black)
+    return (
+        (doubled_white, doubled_black),
+        (stopped_white, stopped_black),
+        (isolated_white, isolated_black),
+    )
 
 
 def mobility(board: chess.Board) -> tuple[int, int]:
     """Calculate mobility (number of legal moves) for both sides.
-    
+
     Uses generator expressions for counting to avoid creating lists.
     Modifies board.turn temporarily (faster than copying) and restores it.
     """
     # Count moves for current side (faster with generator)
     current_mobility = sum(1 for _ in board.legal_moves)
-    
+
     # Count moves for opposite side by temporarily flipping turn
     original_turn = board.turn
     board.turn = not board.turn
     opposite_mobility = sum(1 for _ in board.legal_moves)
     board.turn = original_turn  # Restore original turn
-    
+
     if original_turn == chess.WHITE:
         return current_mobility, opposite_mobility
     else:

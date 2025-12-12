@@ -1,5 +1,6 @@
 import chess
 
+
 def encode(board: chess.Board) -> list[list[list[int]]]:
     """Returns an 8 x 8 x 12 board showing where each player's pieces are."""
     planes = [[[0 for _ in range(8)] for _ in range(8)] for _ in range(12)]

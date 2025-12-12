@@ -53,20 +53,20 @@ class Node:
 def uct(win_pct: float, total_rollouts: int, child_rollouts: int):
     # If child hasn't been visited, give it infinite score to encourage exploration
     if child_rollouts == 0:
-        return float('inf')
+        return float("inf")
     # If parent hasn't been visited, avoid log(0) error
     if total_rollouts == 0:
         return win_pct
     root = math.sqrt(math.log(total_rollouts) / child_rollouts)
     return win_pct + EXPLORATION_EXPLOITATION_BALANCE * root
-    
+
 
 @dataclass
-class MCTSAgent():
+class MCTSAgent:
     num_rounds: int = 500
 
     def select_move(self, board) -> chess.Move:
-        logger.info(f"{"white" if board.turn else "black"}'s move")
+        logger.info(f"{'white' if board.turn else 'black'}'s move")
 
         root = Node(board, None)
 
@@ -84,7 +84,6 @@ class MCTSAgent():
                 node.record_win(winner)
                 node = node.parent
 
-
         best_move = None
         best_score = -1
         for child in root.children:
@@ -98,7 +97,7 @@ class MCTSAgent():
     def select_child(self, node: Node) -> Node:
         total_rollouts = sum(child.visits for child in node.children)
         best_node = None
-        best_score = -float('inf')
+        best_score = -float("inf")
 
         for child in node.children:
             child_score = uct(child.wins[node.board.turn], total_rollouts, child.visits)
@@ -108,21 +107,21 @@ class MCTSAgent():
         return best_node
 
     def rollout(self, board: chess.Board) -> chess.Color:
-        # Make a copy so we don't modify the original board
         board = board.copy()
-        
+
         while not board.is_game_over():
             moves = list(board.legal_moves)
             move = random.choice(moves)
             board.push(move)
-        
-        # After game ends, determine the winner
+
         if board.is_checkmate():
-            # The winner is the player who checkmated (opposite of current turn)
             return chess.WHITE if board.turn == chess.BLACK else chess.BLACK
-        elif board.is_stalemate() or board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition():
-            # For draws, return the player whose turn it is (arbitrary but consistent)
+        elif (
+            board.is_stalemate()
+            or board.is_insufficient_material()
+            or board.is_seventyfive_moves()
+            or board.is_fivefold_repetition()
+        ):
             return board.turn
         else:
-            # Fallback (shouldn't happen, but handle gracefully)
             return board.turn
