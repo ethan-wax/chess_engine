@@ -2,7 +2,7 @@ import chess
 import numpy as np
 
 
-def encode(board: chess.Board) -> np.ndarray:
+def encode_board(board: chess.Board) -> np.ndarray:
     """Returns an 8 x 8 x 18 numpy array showing where each player's pieces are.
     
     Planes 0 - 5 are White's pieces
@@ -59,3 +59,9 @@ def encode(board: chess.Board) -> np.ndarray:
         planes[17, i, j] = 1
 
     return planes
+
+
+def encode_move(move: chess.Move) -> int:
+    start = move.from_square
+    end = move.to_square
+    return start * 64 + end

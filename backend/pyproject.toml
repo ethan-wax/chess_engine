@@ -12,6 +12,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     "ruff>=0.14.6",
     "torch>=2.9.1",
+    "torchvision>=0.24.1",
     "uvicorn>=0.37.0",
 ]
 
