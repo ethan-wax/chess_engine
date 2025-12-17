@@ -1,5 +1,5 @@
-import torch
 import torch.nn as nn
+
 
 class SimpleModel(nn.Module):
     def __init__(self, channels=18, linear_units=512) -> None:

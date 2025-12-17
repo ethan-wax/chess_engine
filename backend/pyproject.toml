@@ -11,8 +11,10 @@ dependencies = [
     "pydantic>=2.11.9",
     "python-multipart>=0.0.20",
     "ruff>=0.14.6",
+    "scikit-learn>=1.8.0",
     "torch>=2.9.1",
     "torchvision>=0.24.1",
+    "tqdm>=4.67.1",
     "uvicorn>=0.37.0",
 ]
 

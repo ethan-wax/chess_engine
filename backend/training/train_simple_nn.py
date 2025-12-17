@@ -1,27 +1,29 @@
-from tqdm import tqdm
-from game_dataset import GameDataset
-import numpy as np
-import chess
-import torch
-from sklearn.model_selection import train_test_split
-from simple_model import SimpleModel
-from torch.utils.data import DataLoader
-from torch.optim import Adam
-from torch.nn import CrossEntropyLoss
 import gc
 
-device = 'mps' if torch.backends.mps.is_available() else 'cpu'
+import numpy as np
+import torch
+from game_dataset import GameDataset
+from simple_model import SimpleModel
+from sklearn.model_selection import train_test_split
+from torch.nn import CrossEntropyLoss
+from torch.optim import Adam
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+device = "mps" if torch.backends.mps.is_available() else "cpu"
 BATCH_SIZE = 64
-MODEL_PATH = 'simple_nn_model.pt'
+MODEL_PATH = "simple_nn_model.pt"
 NUM_EPOCHS = 100
 
-with np.load('lichess_data.npz') as data:
-    X, y = data['X'], data['y']
+with np.load("lichess_data.npz") as data:
+    X, y = data["X"], data["y"]
     X = X.astype(np.float32)
     y = y.astype(np.float32)
 
 X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-X_train, X_valid, y_train, y_valid = train_test_split(X_temp, y_temp, test_size=.25, random_state=42)
+X_train, X_valid, y_train, y_valid = train_test_split(
+    X_temp, y_temp, test_size=0.25, random_state=42
+)
 train_data = GameDataset(X_train, y_train)
 train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
 valid_data = GameDataset(X_valid, y_valid)
@@ -32,7 +34,7 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE)
 model = SimpleModel().to(device)
 optimizer = Adam(model.parameters())
 loss_fn = CrossEntropyLoss()
-best_valid_loss = float('inf')
+best_valid_loss = float("inf")
 
 for epoch in tqdm(range(NUM_EPOCHS)):
     epoch_loss = 0
@@ -49,7 +51,7 @@ for epoch in tqdm(range(NUM_EPOCHS)):
         epoch_loss += loss
 
     gc.collect()
-    
+
     if epoch % 10 == 0:
         print(f"Epoch {epoch} complete: {epoch_loss}")
 
@@ -62,9 +64,9 @@ for epoch in tqdm(range(NUM_EPOCHS)):
             outputs = model(data)
             loss = loss_fn(outputs, labels)
             valid_loss += loss
-        
+
         gc.collect()
-        
+
         if valid_loss > best_valid_loss:
             break
         else:

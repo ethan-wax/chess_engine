@@ -4,19 +4,19 @@ import numpy as np
 
 def encode_board(board: chess.Board) -> np.ndarray:
     """Returns an 8 x 8 x 18 numpy array showing where each player's pieces are.
-    
+
     Planes 0 - 5 are White's pieces
     Planes 6 - 11 are Black's pieces
     Planes 12 - 15 represent castling rights - a 1 on each rook that is legal
     Plane 16 represents turn to move - all 1s for white and all 0s for black
     Plane 17 represents all pawns where en passant is possible
-    
+
     Returns:
         np.ndarray: Shape (18, 8, 8) with dtype uint8
     """
     # Initialize all planes to zeros: shape (18, 8, 8)
     planes = np.zeros((18, 8, 8), dtype=np.uint8)
-    
+
     # Fill piece planes (0-11)
     for square, piece in board.piece_map().items():
         p_type = piece.piece_type
