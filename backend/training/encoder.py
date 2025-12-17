@@ -66,5 +66,6 @@ def encode_move(move: chess.Move) -> int:
     end = move.to_square
     return start * 64 + end
 
+
 def decode_move(move: int) -> chess.Move:
     return chess.Move.from_uci(move)
