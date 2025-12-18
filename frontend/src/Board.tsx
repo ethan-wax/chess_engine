@@ -15,7 +15,7 @@ export interface BoardHandle {
 }
 
 interface BoardProps {
-    modelType: 'Classical' | 'Reinforcement' | 'MCTS';
+    modelType: 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural';
 }
 
 const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
@@ -146,6 +146,32 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
         }
     }
 
+    async function neuralMove() {
+        load();
+        try {
+            const url = backend_url + "/ai-neural";
+            const response = await fetch(url, { method: "GET" });
+            if (!response.ok) {
+                httpError(response);
+            }
+            
+            const data = await response.json();
+            if (data.error) {
+                setError(`AI Error: ${data.error}`);
+                return;
+            }
+            
+            const move = data.move;
+            chessGame.move(move);
+            setPosition(chessGame.fen());
+            setGameStatus(`AI played: ${move}`);
+        } catch (err) {
+            setError('AI failed to move');
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     function onDrop({
         sourceSquare,
         targetSquare,
@@ -184,8 +210,10 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
                     await classicalMove();
                 } else if (modelType === 'Reinforcement') {
                     await reinforcementMove();
-                } else {
+                } else if (modelType === 'MCTS') {
                     await mctsMove();
+                } else if (modelType === 'Neural') {
+                    await neuralMove();
                 }
                 // Check game end conditions after AI move
                 if (chessGame.isCheckmate()) {

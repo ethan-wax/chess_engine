@@ -6,11 +6,11 @@ import {
     Chip,
     Stack
 } from '@mui/material'
-import { Psychology, SmartToy, AccountTree } from '@mui/icons-material'
+import { Psychology, SmartToy, AccountTree, Computer } from '@mui/icons-material'
 
 interface ControlPanelProps {
     onResetBoard?: () => Promise<void>;
-    modelType: 'Classical' | 'Reinforcement' | 'MCTS';
+    modelType: 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural';
     onSwitchModel: () => void;
 }
 
@@ -25,9 +25,9 @@ function ControlPanel({ onResetBoard, modelType, onSwitchModel }: ControlPanelPr
                     </Typography>
                     
                     <Chip 
-                        icon={modelType === 'Classical' ? <Psychology /> : modelType === 'Reinforcement' ? <SmartToy /> : <AccountTree />}
+                        icon={modelType === 'Classical' ? <Psychology /> : modelType === 'Reinforcement' ? <SmartToy /> : modelType === 'MCTS' ? <AccountTree /> : <Computer />}
                         label={modelType}
-                        color={modelType === 'Classical' ? 'primary' : modelType === 'Reinforcement' ? 'secondary' : 'success'}
+                        color={modelType === 'Classical' ? 'primary' : modelType === 'Reinforcement' ? 'secondary' : modelType === 'MCTS' ? 'success' : 'warning'}
                         variant="outlined"
                     />
                     
