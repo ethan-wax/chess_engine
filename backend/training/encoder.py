@@ -12,10 +12,10 @@ def encode_board(board: chess.Board) -> np.ndarray:
     Plane 17 represents all pawns where en passant is possible
 
     Returns:
-        np.ndarray: Shape (18, 8, 8) with dtype uint8
+        np.ndarray: Shape (18, 8, 8) with dtype float32
     """
     # Initialize all planes to zeros: shape (18, 8, 8)
-    planes = np.zeros((18, 8, 8), dtype=np.uint8)
+    planes = np.zeros((18, 8, 8), dtype=np.float32)
 
     # Fill piece planes (0-11)
     for square, piece in board.piece_map().items():
@@ -68,4 +68,6 @@ def encode_move(move: chess.Move) -> int:
 
 
 def decode_move(move: int) -> chess.Move:
-    return chess.Move.from_uci(move)
+    start = move // 64
+    end = move % 64
+    return chess.Move(start, end)

@@ -1,6 +1,6 @@
 import chess
 import numpy as np
-from backend.training.encoder import encode
+from backend.training.encoder import encode_board
 
 # Initial chess board setup as bit mask using encoder ordering
 # 18 planes: 0-5 for white pieces (Pawn, Knight, Bishop, Rook, Queen, King)
@@ -474,38 +474,38 @@ two_moves = [
 ]
 
 
-def test_encode_clear_board():
+def test_encode_board_clear_board():
     board = chess.Board()
     board.clear()
-    planes = encode(board)
+    planes = encode_board(board)
     # Should have shape (18, 8, 8)
     assert planes.shape == (18, 8, 8)
-    assert planes.dtype == np.uint8
+    assert planes.dtype == np.float32
     # All planes should be zeros
-    expected = np.zeros((18, 8, 8), dtype=np.uint8)
+    expected = np.zeros((18, 8, 8), dtype=np.float32)
     expected[16] = 1
     np.testing.assert_array_equal(planes, expected)
 
 
-def test_encode_initial_setup():
+def test_encode_board_initial_setup():
     board = chess.Board()
-    planes = encode(board)
-    expected = np.array(initial_setup, dtype=np.uint8)
+    planes = encode_board(board)
+    expected = np.array(initial_setup, dtype=np.float32)
     np.testing.assert_array_equal(planes, expected)
 
 
-def test_encode_one_move():
+def test_encode_board_one_move():
     board = chess.Board()
     board.push_san("e4")
-    planes = encode(board)
-    expected = np.array(one_move, dtype=np.uint8)
+    planes = encode_board(board)
+    expected = np.array(one_move, dtype=np.float32)
     np.testing.assert_array_equal(planes, expected)
 
 
-def test_encode_two_moves():
+def test_encode_board_two_moves():
     board = chess.Board()
     board.push_san("e4")
     board.push_san("e5")
-    planes = encode(board)
-    expected = np.array(two_moves, dtype=np.uint8)
+    planes = encode_board(board)
+    expected = np.array(two_moves, dtype=np.float32)
     np.testing.assert_array_equal(planes, expected)
