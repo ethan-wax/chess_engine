@@ -15,7 +15,8 @@ model.eval()
 def neural_move(board: chess.Board) -> str:
     board_enc = encode_board(board)
     board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
-    model_moves = model(board_enc).squeeze(0)
+    _, model_moves = model(board_enc)
+    model_moves = model_moves.unsqueeze(0)
 
     legal_moves = np.zeros(4096, dtype=np.bool)
     for move in board.legal_moves:

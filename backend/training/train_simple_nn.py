@@ -5,7 +5,7 @@ import torch
 from game_dataset import GameDataset
 from simple_model import SimpleModel
 from sklearn.model_selection import train_test_split
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, MSELoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -33,22 +33,30 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE)
 
 model = SimpleModel().to(device)
 optimizer = Adam(model.parameters())
-loss_fn = CrossEntropyLoss()
+ce_loss = CrossEntropyLoss()
+mse_loss = MSELoss()
 best_valid_loss = float("inf")
+
+
 
 for epoch in tqdm(range(NUM_EPOCHS)):
     epoch_loss = 0
     model.train()
 
-    for i, (X_batch, y_batch) in enumerate(train_loader):
-        data = X_batch.to(device)
-        labels = y_batch.to(device)
-        outputs = model(data)
-        loss = loss_fn(outputs, labels)
+    for i, (data_batch, value_batch, move_batch) in enumerate(train_loader):
+        data = data_batch.float().to(device)
+        values = value_batch.float().to(device).unsqueeze(1)
+        moves = move_batch.float().to(device)
+        pred_values, pred_moves = model(data)
+
+        policy_loss = ce_loss(pred_moves, moves)
+        value_loss = mse_loss(pred_values, values)
+        total_loss = policy_loss + value_loss
+
         optimizer.zero_grad()
-        loss.backward()
+        total_loss.backward()
         optimizer.step()
-        epoch_loss += loss
+        epoch_loss += total_loss
 
     gc.collect()
 
@@ -58,12 +66,17 @@ for epoch in tqdm(range(NUM_EPOCHS)):
     with torch.no_grad():
         model.eval()
         valid_loss = 0
-        for X_vbatch, y_vbatch in valid_loader:
-            data = X_vbatch.to(device)
-            labels = y_vbatch.to(device)
-            outputs = model(data)
-            loss = loss_fn(outputs, labels)
-            valid_loss += loss
+
+        for data_batch, value_batch, move_batch in valid_loader:
+            data = data_batch.to(device)
+            values = value_batch.float().to(device).unsqueeze(1)
+            moves = move_batch.float().to(device)
+            pred_values, pred_moves = model(data)
+
+            policy_loss = ce_loss(pred_moves, moves)
+            value_loss = mse_loss(pred_values, values)
+            valid_loss += policy_loss + value_loss
+
 
         gc.collect()
 
@@ -76,13 +89,14 @@ print("Model Training Complete")
 model.eval()
 moves = 0
 correct = 0
-for X_tbatch, y_tbatch in test_loader:
-    data = X_tbatch.to(device)
-    labels = y_tbatch.to(device)
-    outputs = model(data)
-    predicted = torch.argmax(outputs, dim=1)
-    moves += len(predicted)
-    correct += (predicted == labels).sum().item()
+
+for data_batch, _, move_batch in test_loader:
+    data = data_batch.float().to(device)
+    moves = move_batch.float().to(device)
+    _, output_moves = model(data)
+    pred_move = torch.argmax(output_moves, dim=1)
+    moves += len(pred_move)
+    correct += (pred_move == moves).sum().item()
 
 gc.collect()
 

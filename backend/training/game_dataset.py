@@ -11,7 +11,8 @@ class GameDataset(Dataset):
     def __len__(self) -> int:
         return len(self.labels)
 
-    def __getitem__(self, idx) -> tuple[np.array, np.float32]:
+    def __getitem__(self, idx) -> tuple[np.array, np.float32, np.float32]:
         data = torch.from_numpy(self.data[idx])
-        label = self.labels[idx]
-        return data, label
+        value = self.labels[idx][0].item()
+        move = self.labels[idx][1].item()
+        return data, value, move
