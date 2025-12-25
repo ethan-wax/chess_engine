@@ -13,7 +13,8 @@ from tqdm import tqdm
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 BATCH_SIZE = 64
 MODEL_PATH = "simple_nn_model.pt"
-NUM_EPOCHS = 100
+NUM_EPOCHS = 10
+VALUE_WEIGHT = 0.5
 
 with np.load("lichess_data.npz") as data:
     X, y = data["X"], data["y"]
@@ -34,12 +35,14 @@ test_loader = DataLoader(test_data, batch_size=BATCH_SIZE)
 model = SimpleModel().to(device)
 optimizer = Adam(model.parameters())
 ce_loss = CrossEntropyLoss()
-mse_loss = MSELoss()
+mse_loss = MSELoss(reduction='mean')
 best_valid_loss = float("inf")
 
 
 
 for epoch in tqdm(range(NUM_EPOCHS)):
+    epoch_policy_loss = 0
+    epoch_value_loss = 0
     epoch_loss = 0
     model.train()
 
@@ -57,11 +60,10 @@ for epoch in tqdm(range(NUM_EPOCHS)):
         total_loss.backward()
         optimizer.step()
         epoch_loss += total_loss
+        epoch_policy_loss += policy_loss
+        epoch_value_loss += value_loss
 
     gc.collect()
-
-    if epoch % 10 == 0:
-        print(f"Epoch {epoch} complete: {epoch_loss}")
 
     with torch.no_grad():
         model.eval()
@@ -75,7 +77,7 @@ for epoch in tqdm(range(NUM_EPOCHS)):
 
             policy_loss = ce_loss(pred_moves, moves)
             value_loss = mse_loss(pred_values, values)
-            valid_loss += policy_loss + value_loss
+            valid_loss += policy_loss + VALUE_WEIGHT *  value_loss
 
 
         gc.collect()
@@ -100,5 +102,5 @@ for data_batch, _, move_batch in test_loader:
 
 gc.collect()
 
-print(f"Model Accuracy: {correct / moves * 100:2f}")
 torch.save(model.state_dict(), MODEL_PATH)
+print(f"Model Accuracy: {(correct / moves * 100):2f}")
