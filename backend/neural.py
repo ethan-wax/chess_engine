@@ -2,8 +2,8 @@ import chess
 import numpy as np
 import torch
 
-from .training.encoder import decode_move, encode_board, encode_move
-from .training.simple_model import SimpleModel
+from training.encoder import decode_move, encode_board, encode_move
+from training.simple_model import SimpleModel
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 model = SimpleModel().to(device)

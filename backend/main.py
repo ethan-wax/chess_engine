@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from classical import classical_move
 from mcts import MCTSAgent
-from reinforcement import reinforcement_move
+from reinforcement import ReinforcementAgent
 from neural import neural_move
 
 # Configure logging
@@ -80,12 +80,13 @@ async def ai_mcts():
 @app.get("/ai-reinforcement")
 async def ai_reinforcement():
     try:
-        move = reinforcement_move(board)
+        agent = ReinforcementAgent()
+        move = agent.select_move(board)
         board.push_san(move)
-        logger.info(f"AI classical move {move} made. Current board:\n{board}")
+        logger.info(f"AI Reinforcement move {move} made. Current board:\n{board}")
         return JSONResponse(content={"move": move})
     except Exception as e:
-        logger.error(f"Error in ai_reinforcement: {e}")
+        logger.error(f"Error in ai_reinfocement: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.get('/ai-neural')
