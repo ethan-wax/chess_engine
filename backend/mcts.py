@@ -24,12 +24,15 @@ class Node:
         for m in self.board.legal_moves:
             self.unvisited_moves.add(m)
 
+    def add_child(self, new_board: chess.Board, new_move: chess.Move):
+        return Node(new_board, new_move, parent=self)
+
     def add_random_child(self):
         new_move = random.choice(list(self.unvisited_moves))
         self.unvisited_moves.remove(new_move)
         new_board = self.board.copy()
         new_board.push(new_move)
-        new_node = Node(new_board, new_move, parent=self)
+        new_node = self.add_child(new_board, new_move)
         self.children.append(new_node)
         return new_node
 
@@ -61,9 +64,10 @@ def uct(win_pct: float, total_rollouts: int, child_rollouts: int):
 @dataclass
 class MCTSAgent:
     num_rounds: int = 500
+    node_type: type = Node
 
     def select_move(self, board) -> chess.Move:
-        root = Node(board, None)
+        root = self.node_type(board, None)
 
         for _ in range(self.num_rounds):
             node = root
@@ -80,7 +84,7 @@ class MCTSAgent:
                 node = node.parent
 
         best_move = None
-        best_score = -1
+        best_score = -float('inf')
         for child in root.children:
             child_score = child.win_percent(board.turn)
             if child_score > best_score:
