@@ -33,6 +33,11 @@ state_dict = torch.load("training/reinforcement_model.pt")
 model.load_state_dict(state_dict)
 model.eval()
 
+old_model = SimpleModel().to(device)
+old_state_dict = torch.load("training/old_reinforcement.pt")
+old_model.load_state_dict(state_dict)
+old_model.eval()
+
 def puct(win_pct: float, prediction: float, total_rollouts: int, child_rollouts: int):
     if total_rollouts == 0:
         return win_pct
@@ -44,13 +49,20 @@ memo = {}
 @dataclass
 class ReinforcementAgent(MCTSAgent):
     node_type: type = ReinforcementNode
+    old: bool = False
+
+    def __post_init__(self):
+        if self.old:
+            self.model = old_model
+        else:
+            self.model = model
 
     def select_child(self, node: Node) -> Node:
         key = chess.polyglot.zobrist_hash(node.board)
         if key not in memo:
             board_enc = encode_board(node.board)
             board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
-            _, model_moves = model(board_enc)
+            _, model_moves = self.model(board_enc)
             model_moves = model_moves.squeeze(0)
 
             legal_moves = np.zeros(4096, dtype=np.bool)
@@ -79,8 +91,11 @@ class ReinforcementAgent(MCTSAgent):
 
         return best_node
 
-    def rollout(self, board: chess.Board) -> chess.Color:
+    def rollout(self, board: chess.Board) -> float:
+        if board.is_game_over():
+            winner = board.outcome().winner
+            return 1 if winner is not None else 0
         board_enc = encode_board(board)
         board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
-        value, _ = model(board_enc)
+        value, _ = self.model(board_enc)
         return value

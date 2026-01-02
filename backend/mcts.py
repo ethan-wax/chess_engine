@@ -115,12 +115,5 @@ class MCTSAgent:
 
         if board.is_checkmate():
             return chess.WHITE if board.turn == chess.BLACK else chess.BLACK
-        elif (
-            board.is_stalemate()
-            or board.is_insufficient_material()
-            or board.is_seventyfive_moves()
-            or board.is_fivefold_repetition()
-        ):
-            return board.turn
-        else:
-            return board.turn
+
+        return board.turn
