@@ -1,5 +1,4 @@
 from tqdm import tqdm
-from datetime import datetime
 from typing import Union
 import chess
 from training.encoder import encode_board, encode_move
@@ -98,8 +97,9 @@ def train_model():
     
 
 def self_play():
-    agent = ReinforcementAgent(50)
-    smart_agent = ReinforcementAgent()
+    # Use fewer MCTS rounds for faster self-play (25 instead of 50)
+    agent = ReinforcementAgent(25)
+    smart_agent = ReinforcementAgent(25)
     X, y = [], []
     non_drawn = 0
     tqdm.write("Start Self Play")

@@ -45,6 +45,12 @@ def puct(win_pct: float, prediction: float, total_rollouts: int, child_rollouts:
     return win_pct + EXPLORATION_EXPLOITATION_BALANCE * prediction * root / (1 + child_rollouts)
 
 memo = {}
+MAX_MEMO_SIZE = 100000  # Limit memo size to prevent memory bloat
+
+def clear_memo_if_needed():
+    """Clear memo if it gets too large"""
+    if len(memo) > MAX_MEMO_SIZE:
+        memo.clear()
 
 @dataclass
 class ReinforcementAgent(MCTSAgent):
@@ -58,11 +64,13 @@ class ReinforcementAgent(MCTSAgent):
             self.model = model
 
     def select_child(self, node: Node) -> Node:
+        clear_memo_if_needed()
         key = chess.polyglot.zobrist_hash(node.board)
         if key not in memo:
             board_enc = encode_board(node.board)
             board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
-            _, model_moves = self.model(board_enc)
+            with torch.no_grad():
+                _, model_moves = self.model(board_enc)
             model_moves = model_moves.squeeze(0)
 
             legal_moves = np.zeros(4096, dtype=np.bool)
@@ -97,5 +105,6 @@ class ReinforcementAgent(MCTSAgent):
             return 1 if winner is not None else 0
         board_enc = encode_board(board)
         board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
-        value, _ = self.model(board_enc)
-        return value
+        with torch.no_grad():
+            value, _ = self.model(board_enc)
+        return value.item()
