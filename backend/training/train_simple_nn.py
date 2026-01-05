@@ -1,9 +1,10 @@
+from pathlib import Path
 import gc
 
 import numpy as np
 import torch
-from game_dataset import GameDataset
-from simple_model import SimpleModel
+from training.game_dataset import GameDataset
+from training.simple_model import SimpleModel
 from sklearn.model_selection import train_test_split
 from torch.nn import CrossEntropyLoss, MSELoss
 from torch.optim import Adam
@@ -12,11 +13,12 @@ from tqdm import tqdm
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 BATCH_SIZE = 64
-MODEL_PATH = "simple_nn_model.pt"
+MODEL_PATH = Path("training/simple_nn_model.pt")
 NUM_EPOCHS = 10
 VALUE_WEIGHT = 0.5
 
-with np.load("lichess_data.npz") as data:
+data_path = Path("training/lichess_data.npz")
+with np.load(data_path) as data:
     X, y = data["X"], data["y"]
     X = X.astype(np.float32)
     y = y.astype(np.float32)

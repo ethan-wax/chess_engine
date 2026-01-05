@@ -1,3 +1,4 @@
+from pathlib import Path
 import chess
 import numpy as np
 import torch
@@ -7,7 +8,8 @@ from training.simple_model import SimpleModel
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 model = SimpleModel().to(device)
-state_dict = torch.load("training/simple_nn_model.pt")
+model_path = Path("training/simple_nn_model.pt")
+state_dict = torch.load(model_path)
 model.load_state_dict(state_dict)
 model.eval()
 

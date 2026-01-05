@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 import chess
 import chess.polyglot
 import math
@@ -29,13 +30,15 @@ class ReinforcementNode(Node):
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 model = SimpleModel().to(device)
-state_dict = torch.load("training/reinforcement_model.pt")
+model_path = Path("training/reinforcement_model.pt")
+state_dict = torch.load(model_path)
 model.load_state_dict(state_dict)
 model.eval()
 
 old_model = SimpleModel().to(device)
-old_state_dict = torch.load("training/old_reinforcement.pt")
-old_model.load_state_dict(state_dict)
+old_model_path = Path("training/old_reinforcement.pt")
+old_state_dict = torch.load(old_model_path)
+old_model.load_state_dict(old_state_dict)
 old_model.eval()
 
 def puct(win_pct: float, prediction: float, total_rollouts: int, child_rollouts: int):

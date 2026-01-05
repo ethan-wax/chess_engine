@@ -1,10 +1,12 @@
+from pathlib import Path
 import chess
 import chess.pgn
 import numpy as np
-from encoder import encode_board, encode_move
+from training.encoder import encode_board, encode_move
 
 games = []
-with open("lichess_filtered.pgn", "r", encoding="utf-8") as pgn:
+pgn_path = Path("training/lichess_filtered.pgn")
+with open(pgn_path, "r", encoding="utf-8") as pgn:
     while True:
         game = chess.pgn.read_game(pgn)
 
@@ -37,8 +39,9 @@ for game in games:
 X_data = np.array(X_train, dtype=np.float32)
 y_data = np.array(y_train, dtype=np.float32)
 
+data_path = Path("training/lichess_data.npz")
 np.savez_compressed(
-    "lichess_data.npz",
+    data_path,
     X=X_data,
     y=y_data,
 )

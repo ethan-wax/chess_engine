@@ -1,5 +1,6 @@
 from tqdm import tqdm
 from typing import Union
+from pathlib import Path
 import chess
 from training.encoder import encode_board, encode_move
 from reinforcement import ReinforcementAgent
@@ -67,13 +68,15 @@ def simulate_game(
 
 def train_model():
     model = SimpleModel().to(device)
-    state_dict = torch.load("reinforcement_model.pt")
+    model_path = Path("training/reinforcement_model.pt")
+    state_dict = torch.load(model_path)
     model.load_state_dict(state_dict)
     optimizer = Adam(model.parameters())
     ce_loss = CrossEntropyLoss()
     mse_loss = MSELoss(reduction='mean')
 
-    with np.load("self_play_episodes.npz") as data:
+    episodes_path = Path("training/self_play_episodes.npz")
+    with np.load(episodes_path) as data:
         X, y = data["X"], data["y"]
         X = X.astype(np.float32)
         y = y.astype(np.float32)
@@ -92,9 +95,8 @@ def train_model():
         total_loss.backward()
         optimizer.step()
 
-    torch.save(model.state_dict(), "reinforcement_model.pt")
-
-    
+    model_path = Path("training/reinforcement_model.pt")
+    torch.save(model.state_dict(), model_path)
 
 def self_play():
     # Use fewer MCTS rounds for faster self-play (25 instead of 50)
@@ -105,7 +107,7 @@ def self_play():
     tqdm.write("Start Self Play")
     for i in tqdm(range(GAMES_PER_CYCLE)):
         board_encs, move_encs = simulate_game(agent, agent, smart_agent, smart_agent)
-        result = move_encs[0][0]
+        result = move_encs[0][0] if len(move_encs) > 0 else None
         if result != 0:
             non_drawn += 1
         X.extend(board_encs)
@@ -115,8 +117,9 @@ def self_play():
     y_data = np.array(y, dtype=np.float32)
 
     tqdm.write(f"Games with a winner: {non_drawn}")
+    episodes_path = Path("training/self_play_episodes.npz")
     np.savez_compressed(
-        "self_play_episodes.npz",
+        episodes_path,
         X=X_data,
         y=y_data,
     )
