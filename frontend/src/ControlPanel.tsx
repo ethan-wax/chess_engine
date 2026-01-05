@@ -1,54 +1,114 @@
 import { 
     Button, 
-    Card, 
-    CardContent, 
     Typography,
-    Chip,
-    Stack
+    Stack,
+    Box,
+    Divider,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel,
 } from '@mui/material'
-import { Psychology, SmartToy, AccountTree, Computer } from '@mui/icons-material'
+import type { SelectChangeEvent } from '@mui/material'
+import { Psychology, SmartToy, AccountTree, Computer, RestartAlt } from '@mui/icons-material'
 
 interface ControlPanelProps {
     onResetBoard?: () => Promise<void>;
     modelType: 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural';
-    onSwitchModel: () => void;
+    onSwitchModel: (model: 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural') => void;
 }
 
+const modelOptions: Array<{
+    value: 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural';
+    label: string;
+    icon: React.ReactNode;
+}> = [
+    { value: 'Classical', label: 'Classical', icon: <Psychology /> },
+    { value: 'MCTS', label: 'MCTS', icon: <AccountTree /> },
+    { value: 'Neural', label: 'Neural', icon: <Computer /> },
+    { value: 'Reinforcement', label: 'Reinforcement', icon: <SmartToy /> },
+];
+
 function ControlPanel({ onResetBoard, modelType, onSwitchModel }: ControlPanelProps) {
+    const handleModelChange = (event: SelectChangeEvent) => {
+        onSwitchModel(event.target.value as 'Classical' | 'Reinforcement' | 'MCTS' | 'Neural');
+    };
 
     return (
-        <Card>
-            <CardContent>
-                <Stack direction="column" spacing={2} alignItems="center">
-                    <Typography variant="body1">
-                        Current Model:
-                    </Typography>
-                    
-                    <Chip 
-                        icon={modelType === 'Classical' ? <Psychology /> : modelType === 'Reinforcement' ? <SmartToy /> : modelType === 'MCTS' ? <AccountTree /> : <Computer />}
-                        label={modelType}
-                        color={modelType === 'Classical' ? 'primary' : modelType === 'Reinforcement' ? 'secondary' : modelType === 'MCTS' ? 'success' : 'warning'}
-                        variant="outlined"
-                    />
-                    
-                    <Button 
-                        variant="contained" 
-                        onClick={onSwitchModel}
-                        sx={{ marginLeft: 2 }}
-                    >
-                        Switch Model
-                    </Button>
+        <Stack spacing={2}>
+            <Box>
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        mb: 1.5,
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        fontSize: '1.1rem',
+                    }}
+                >
+                    Game Controls
+                </Typography>
+                
+                <Stack spacing={2}>
+                    <FormControl fullWidth size="small">
+                        <InputLabel id="model-select-label">AI Model</InputLabel>
+                        <Select
+                            labelId="model-select-label"
+                            id="model-select"
+                            value={modelType}
+                            label="AI Model"
+                            onChange={handleModelChange}
+                            sx={{
+                                borderRadius: 1.5,
+                            }}
+                        >
+                            {modelOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                    <Stack direction="row" spacing={1.5} alignItems="center">
+                                        {option.icon}
+                                        <Typography>{option.label}</Typography>
+                                    </Stack>
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+
+                    <Divider />
 
                     <Button
-                        variant="contained"
+                        variant="outlined"
                         onClick={onResetBoard}
-                        sx={{ marginLeft: 2 }}
+                        startIcon={<RestartAlt />}
+                        fullWidth
+                        size="small"
+                        sx={{
+                            py: 1,
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            borderRadius: 1.5,
+                            textTransform: 'none',
+                        }}
                     >
                         Reset Board
                     </Button>
                 </Stack>
-            </CardContent>
-        </Card>
+            </Box>
+
+            <Divider />
+
+            <Box>
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.75rem',
+                        lineHeight: 1.5,
+                    }}
+                >
+                    Select an AI model to play against. Move pieces by dragging and dropping.
+                </Typography>
+            </Box>
+        </Stack>
     )
 }
 

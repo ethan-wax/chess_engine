@@ -5,7 +5,8 @@ import {
     Box, 
     Stack, 
     Alert,
-    CircularProgress
+    CircularProgress,
+    Typography
 } from '@mui/material'
 
 const backend_url = `http://127.0.0.1:8000`;
@@ -238,15 +239,104 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
     }
 
     return (
-        <Stack alignItems='center' spacing={2}>
-            { error && <Alert variant='outlined' severity='error' sx={{ maxWidth: '50%'}}>{error}</Alert> }
-            { gameStatus && <Alert variant='outlined' severity='info' sx={{ maxWidth: '50%'}}>{gameStatus}</Alert> }
-            { playerWin && <Alert variant='outlined' severity='success' sx={{ maxWidth: '50%'}}>You won!</Alert> }
-            { playerLoss && <Alert variant='outlined' severity='error' sx={{ maxWidth: '50%'}}>You lost!</Alert> }
-            { playerDraw && <Alert variant='outlined' severity='warning' sx={{ maxWidth: '50%'}}>Draw!</Alert> }
-            { isLoading && <CircularProgress /> }
+        <Stack alignItems='center' spacing={1.5} sx={{ width: '100%' }}>
+            { error && (
+                <Alert 
+                    variant='filled' 
+                    severity='error' 
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.85rem',
+                        py: 0.5,
+                    }}
+                >
+                    {error}
+                </Alert>
+            ) }
+            { gameStatus && (
+                <Alert 
+                    variant='filled' 
+                    severity='info' 
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.85rem',
+                        py: 0.5,
+                    }}
+                >
+                    {gameStatus}
+                </Alert>
+            ) }
+            { playerWin && (
+                <Alert 
+                    variant='filled' 
+                    severity='success' 
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        py: 0.5,
+                    }}
+                >
+                    🎉 Congratulations! You won!
+                </Alert>
+            ) }
+            { playerLoss && (
+                <Alert 
+                    variant='filled' 
+                    severity='error' 
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        py: 0.5,
+                    }}
+                >
+                    Game Over - You lost!
+                </Alert>
+            ) }
+            { playerDraw && (
+                <Alert 
+                    variant='filled' 
+                    severity='warning' 
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        py: 0.5,
+                    }}
+                >
+                    It's a draw!
+                </Alert>
+            ) }
+            { isLoading && (
+                <Alert 
+                    variant='filled' 
+                    severity='info' 
+                    icon={<CircularProgress size={16} sx={{ color: 'inherit' }} />}
+                    sx={{ 
+                        maxWidth: 500,
+                        borderRadius: 1.5,
+                        fontSize: '0.85rem',
+                        py: 0.5,
+                    }}
+                >
+                    AI is thinking...
+                </Alert>
+            ) }
             
-            <Box sx={{ width: '55%', margin: 'auto' }}>
+            <Box 
+                sx={{ 
+                    width: '100%',
+                    maxWidth: 560,
+                    display: 'flex',
+                    justifyContent: 'center',
+                }}
+            >
                 <Chessboard options={chessboardOptions}/>
             </Box>
         </Stack>
