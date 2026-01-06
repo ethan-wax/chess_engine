@@ -80,7 +80,11 @@ class MCTSAgent:
             winner = self.rollout(node.board)
 
             while node is not None:
-                node.record_win(winner)
+                if winner is not None:
+                    node.record_win(winner)
+                else:
+                    # For draws, don't record a win for either side
+                    node.visits += 1
                 node = node.parent
 
         best_move = None
@@ -105,7 +109,7 @@ class MCTSAgent:
                 best_score = child_score
         return best_node
 
-    def rollout(self, board: chess.Board) -> chess.Color:
+    def rollout(self, board: chess.Board) -> chess.Color | None:
         board = board.copy()
 
         while not board.is_game_over():
@@ -113,7 +117,9 @@ class MCTSAgent:
             move = random.choice(moves)
             board.push(move)
 
-        if board.is_checkmate():
-            return chess.WHITE if board.turn == chess.BLACK else chess.BLACK
-
-        return board.turn
+        outcome = board.outcome()
+        if outcome is None:
+            return None
+        
+        # Return the winner, or None for draws
+        return outcome.winner

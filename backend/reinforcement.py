@@ -105,7 +105,10 @@ class ReinforcementAgent(MCTSAgent):
     def rollout(self, board: chess.Board) -> float:
         if board.is_game_over():
             winner = board.outcome().winner
-            return 1 if winner is not None else 0
+            if winner is None:
+                return 0  # Draw
+            # Return +1 for White win, -1 for Black win
+            return 1.0 if winner == chess.WHITE else -1.0
         board_enc = encode_board(board)
         board_enc = torch.from_numpy(board_enc).unsqueeze(0).to(device)
         with torch.no_grad():

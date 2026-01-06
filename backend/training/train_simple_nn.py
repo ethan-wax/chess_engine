@@ -1,5 +1,9 @@
 from pathlib import Path
 import gc
+import sys
+
+# Add parent directory to path to allow imports when running as script
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import torch
@@ -51,7 +55,7 @@ for epoch in tqdm(range(NUM_EPOCHS)):
     for i, (data_batch, value_batch, move_batch) in enumerate(train_loader):
         data = data_batch.float().to(device)
         values = value_batch.float().to(device).unsqueeze(1)
-        moves = move_batch.float().to(device)
+        moves = move_batch.long().to(device)  # CrossEntropyLoss requires long/int
         pred_values, pred_moves = model(data)
 
         policy_loss = ce_loss(pred_moves, moves)
@@ -74,7 +78,7 @@ for epoch in tqdm(range(NUM_EPOCHS)):
         for data_batch, value_batch, move_batch in valid_loader:
             data = data_batch.to(device)
             values = value_batch.float().to(device).unsqueeze(1)
-            moves = move_batch.float().to(device)
+            moves = move_batch.long().to(device)  # CrossEntropyLoss requires long/int
             pred_values, pred_moves = model(data)
 
             policy_loss = ce_loss(pred_moves, moves)
@@ -91,18 +95,18 @@ for epoch in tqdm(range(NUM_EPOCHS)):
 
 print("Model Training Complete")
 model.eval()
-moves = 0
+total_moves = 0
 correct = 0
 
 for data_batch, _, move_batch in test_loader:
     data = data_batch.float().to(device)
-    moves = move_batch.float().to(device)
+    target_moves = move_batch.long().to(device)
     _, output_moves = model(data)
     pred_move = torch.argmax(output_moves, dim=1)
-    moves += len(pred_move)
-    correct += (pred_move == moves).sum().item()
+    total_moves += len(pred_move)
+    correct += (pred_move == target_moves).sum().item()
 
 gc.collect()
 
 torch.save(model.state_dict(), MODEL_PATH)
-print(f"Model Accuracy: {(correct / moves * 100):2f}")
+print(f"Model Accuracy: {(correct / total_moves * 100):2f}")
