@@ -195,7 +195,7 @@ const Board = forwardRef<BoardHandle, BoardProps>(({ modelType }, ref) => {
             setGameStatus(`You played: ${move.san}`);
             setError('');
 
-            const url = backend_url + `/move-uci/${sourceSquare + targetSquare}`;
+            const url = backend_url + `/move-san/${move.san}`;
             fetch(url, { method: "POST" });
 
             if (chessGame.isCheckmate()) {
